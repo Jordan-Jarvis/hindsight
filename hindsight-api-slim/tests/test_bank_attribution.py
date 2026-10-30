@@ -132,6 +132,21 @@ class TestBindBankIdDecorator:
         assert observed_bank_ids[-1] == "user-update"
         assert get_current_bank_id() is None
 
+        engine.embeddings = object()
+
+        async def fake_generate_embeddings(_backend: object, _texts: list[str]) -> list[list[float]]:
+            observed_bank_ids.append(get_current_bank_id())
+            return [[0.25]]
+
+        with patch(
+            "hindsight_api.engine.memory_engine.embedding_utils.generate_embeddings_batch",
+            side_effect=fake_generate_embeddings,
+        ):
+            assert await engine._mental_model_embedding_vector("user-mental-model", "name", "content") == [0.25]
+
+        assert observed_bank_ids[-1] == "user-mental-model"
+        assert get_current_bank_id() is None
+
 
 # ── LLM provider: user injection ──────────────────────────────────────────────
 

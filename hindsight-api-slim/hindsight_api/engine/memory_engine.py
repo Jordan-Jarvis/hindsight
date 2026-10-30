@@ -17517,8 +17517,11 @@ class MemoryEngine(MemoryEngineInterface):
                 result.append(entry)
             return result
 
+    @_bind_bank_id()
     async def _mental_model_embedding_vector(self, bank_id: str, name: str, content: str) -> list[float] | None:
         """The page embedding as a vector. Over name + content, matching what BM25 indexes."""
+        # All mental-model writes and index rebuilds call this shared boundary directly. Bind the
+        # bank here so every provider request is attributed, including direct create/edit paths.
         # A refresh binds its own trace around this; a direct create/edit of a page has none, so
         # give it one rather than leave the embedding with no operation.
         with operation_run(bank_id, "mental_model_write"):
